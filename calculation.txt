@@ -1,0 +1,61 @@
+<!DOCTYPE etl SYSTEM "https://scriptella.org/dtd/etl.dtd">
+<etl>
+    <description>Import excel - neo4j</description>
+    <properties>
+        file=/usr/share/graphlytic/volume/data/tmp/import/1/402500*****0189/***********.xlsx
+    </properties>
+    <connection id="neo4j" driver="neo4j" url="neo4j+s://1b*************s.neo4j.io" user="neo4j" password="**************">
+        encrypted=true
+    </connection>
+    <connection id="groovy" driver="script">language=groovy</connection>
+    <connection id="logger" driver="log">
+        level=WARN
+    </connection>
+    <connection id="excel" driver="excel">
+        format=XLSX
+    </connection>
+    <query connection-id="excel">
+        path=$file
+        sheet=U_s
+        skip_rows=1
+        num_columns=15
+        escapeChars='
+        <script connection-id="neo4j">
+            MERGE (n:$row.A {uid:'$row.B'})
+            SET
+                n.name='$row.B',
+                n.ft='$row.C',
+                n.ap_elements=toFloat(replace('$row.D', ',', '.')),
+                n.al=toFloat(replace('$row.E', ',', '.')),
+                n.pp=toFloat(replace('$row.N', ',', '.')),
+                n.tp=toFloat(replace('$row.O', ',', '.'))
+        </script>
+    </query>
+    <query connection-id="excel">
+        path=$file
+        sheet=Tunnel_Designs
+        skip_rows=1
+        num_columns=1
+        escapeChars='
+        <script connection-id="neo4j">
+            MERGE (n:Option {uid:'$row.A'})
+            SET
+                n.name='$row.A'
+        </script>
+    </query>
+    <query connection-id="excel">
+        path=$file
+        sheet=Tunnel_Designs
+        skip_rows=1
+        num_columns=4
+        escapeChars='
+        <script connection-id="neo4j">
+            MATCH (n1:Option{uid:'$row.A'}), (n2{uid:'$row.B'}) WHERE NOT n2:Option
+            MERGE (n1)-[r:USES]->(n2)
+            SET
+                r.uid=(n1.uid + '-' + n2.uid),
+                r.quantity=toFloat(replace('$row.D', ',', '.')),
+                r.ft='$row.C'
+        </script>
+    </query>
+</etl>
