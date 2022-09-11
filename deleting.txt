@@ -1,0 +1,13 @@
+<!DOCTYPE etl SYSTEM "https://scriptella.org/dtd/etl.dtd">
+<etl>
+    <description>Import excel - neo4j</description>
+    <connection id="neo4j" driver="neo4j" url="neo4j+s://1******es.neo4j.io" user="neo4j" password="***********">
+        encrypted=true
+    </connection>
+    <query connection-id="neo4j">
+        call apoc.periodic.iterate("MATCH ()-[r]->() return r", "DETACH DELETE r", {batchSize:10000})
+    </query>
+    <query connection-id="neo4j">
+        call apoc.periodic.iterate("MATCH (n) return n", "DETACH DELETE n", {batchSize:10000})
+    </query>
+</etl>
