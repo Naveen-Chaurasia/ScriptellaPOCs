@@ -1,0 +1,45 @@
+<!DOCTYPE etl SYSTEM "https://scriptella.org/dtd/etl.dtd">
+<etl>
+    <description>Import excel - neo4j</description>
+    <properties>
+        as=0.1
+        al=0.0
+        ap=4
+        ep=9
+        tp=0.06
+    </properties>
+    <connection id="neo4j" driver="neo4j" url="neo4j+s://1********s.neo4j.io" user="neo4j" password="*************">
+        encrypted=true
+    </connection>
+    <connection id="groovy" driver="script">language=groovy</connection>
+    <connection id="logger" driver="log">
+        level=WARN
+    </connection>
+    <script connection-id="neo4j">
+        MATCH (n) WHERE NOT n:Option
+        SET
+            n.eci_cost=(
+                (n.as*$as)+
+                (n.op*$odp)+
+                (n.pp*$pp)+
+                (n.tp*$tp)
+            )
+    </script>
+    <script connection-id="neo4j">
+        MATCH (n1)-[r]->(n2)
+        SET
+            r.as=r.q*n2.as,
+            r.tp=r.q*n2.tp,
+            r.et=r.q*n2.et
+    </script>
+    <script connection-id="neo4j">
+        MATCH (n1)-[r]->(n2) WITH n1,
+            SUM(r.et) AS et,
+            SUM(r.pp) AS pp,
+            SUM(r.tetp) AS tp
+        SET
+            n1.et=et,
+            n1.pp=pp,
+            n1.tp=tp
+    </script>
+</etl>
